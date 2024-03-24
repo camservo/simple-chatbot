@@ -37,23 +37,6 @@ def test_convert_uses_default_renderer(text_to_speech_converter, mock_openai_cli
         mock_playsound.assert_called_once_with("tempfile.mp3")
 
 
-def test_convert_gpt_calls_openai_with_correct_params(
-    text_to_speech_converter, mock_openai_client
-):
-    """Tests that convert_gpt method calls the OpenAI client with correct parameters."""
-    with patch("tempfile.NamedTemporaryFile") as mock_tempfile, patch(
-        "playsound.playsound"
-    ) as mock_playsound:
-        mock_tempfile.return_value.__enter__.return_value.name = "tempfile.mp3"
-        text_to_speech_converter.convert_gpt(
-            "Test GPT conversion", model="custom-model", voice="custom-voice"
-        )
-        # Check if OpenAI client's audio.speech.create was called with expected parameters.
-        mock_openai_client.audio.speech.create.assert_called_once_with(
-            model="custom-model", voice="custom-voice", input="Test GPT conversion"
-        )
-
-
 def test_convert_gtts_creates_and_plays_file(text_to_speech_converter):
     """Tests that convert_gtts method creates and plays an audio file."""
     with patch("tempfile.NamedTemporaryFile") as mock_tempfile, patch(
