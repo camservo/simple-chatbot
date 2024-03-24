@@ -4,9 +4,7 @@ from gtts import gTTS
 import os
 import playsound
 import json
-# import nltk
 from dotenv import load_dotenv
-# import re
 
 load_dotenv()
 client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
@@ -24,7 +22,7 @@ def listen_and_transcribe():
     try:
         text = r.recognize_google(audio)
         print("You said: " + text)
-        return text + append_string
+        return text
     except sr.UnknownValueError:
         print("Could not understand audio")
     except sr.RequestError as e:
