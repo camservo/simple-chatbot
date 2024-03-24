@@ -14,7 +14,7 @@ if __name__ == "__main__":
     load_dotenv()
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     tts_converter = TextToSpeechConverter(client)
-    tts_converter.default_renderer = "chatgpt"
+    # tts_converter.default_renderer = "chatgpt"
     n = 1
     for i in range(n):
         # question = speech_to_text.listen_and_transcribe()
