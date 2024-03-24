@@ -3,9 +3,9 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 
-import ask_questions
-import speech_to_text
-import text_to_speech
+import app.ask_questions as ask_questions
+import app.speech_to_text as speech_to_text
+import app.text_to_speech as text_to_speech
 
 if __name__ == "__main__":
     load_dotenv()
@@ -20,4 +20,4 @@ if __name__ == "__main__":
             ):
                 print
                 print(sentence)
-                text_to_speech.text_to_speech(sentence)
+                text_to_speech(sentence)
