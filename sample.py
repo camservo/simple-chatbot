@@ -4,12 +4,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 import app.ask_questions as ask_questions
-
-# import app.speech_to_text as speech_to_text
 from app.audio import SpeechToTextConverter, TextToSpeechConverter
-
-# # import app.text_to_speech as text_to_speech
-# from app.text_to_speech import text_to_speech
 
 if __name__ == "__main__":
     load_dotenv()
