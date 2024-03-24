@@ -1,72 +1,63 @@
-import logging
 import tempfile
 
 import playsound
-from gtts import gTTS
 
 
 class TextToSpeechConverter:
-    def __init__(
-        self,
-        client,
-        default_gpt_model="tts-1",
-        default_gpt_voice="nova",
-        default_renderer="gtts",
-        default_gtts_lang="en",
-        default_gtts_tld="ie",
-    ):
-        """
-        Initialize the text-to-speech converter.
+    """
+    A class to convert text to speech using OpenAI's text-to-speech API.
 
-        :param client: The OpenAI client instance.
-        :param default_gpt_model: The default model to use for text-to-speech.
-        :param default_gpt_voice: The default voice to use for text-to-speech.
+    This class provides an interface to convert a given text string into speech,
+    which is then played back using the playsound module. It allows specifying
+    the model and voice to be used for the text-to-speech conversion.
+
+    Attributes:
+        client (openai.OpenAI): The OpenAI client instance used for API requests.
+        default_model (str): The default model to use for text-to-speech conversion.
+        default_voice (str): The default voice to use for the spoken text.
+    """
+
+    def __init__(self, client, default_model="tts-1", default_voice="nova"):
+        """
+        Initializes the TextToSpeechConverter with an OpenAI client, and optionally,
+        a default model and voice for the text-to-speech conversion.
+
+        Args:
+            client (openai.OpenAI): The OpenAI client instance.
+            default_model (str, optional): The default model to use for text-to-speech.
+                Defaults to "tts-1".
+            default_voice (str, optional): The default voice to use for the spoken text.
+                Defaults to "nova".
         """
         self.client = client
-        self.default_gpt_model = default_gpt_model
-        self.default_gpt_voice = default_gpt_voice
-        self.default_renderer = default_renderer
-        self.default_gtts_lang = default_gtts_lang
-        self.default_gtts_tld = default_gtts_tld
+        self.default_model = default_model
+        self.default_voice = default_voice
 
-    def convert(self, text, renderer=None):
-        if renderer is None:
-            renderer = self.default_renderer
-        if renderer == "chatgpt":
-            self.convert_gpt(text=text)
-        elif renderer == "gtts":
-            self.convert_gtts(text=text)
-        else:
-            logging.error("Unknown renderer")
-
-    def convert_gpt(self, text, model=None, voice=None):
+    def convert(self, text, model=None, voice=None):
         """
-        Convert text to speech and play it.
+        Converts the provided text to speech, using the specified or default model and voice.
+        The generated speech audio is played back using the playsound module.
 
-        :param text: The text to convert.
-        :param model: The model to use, defaults to the instance's default model.
-        :param voice: The voice to use, defaults to the instance's default voice.
+        Args:
+            text (str): The text to convert to speech.
+            model (str, optional): The model to use for the conversion. If not specified,
+                the default model is used.
+            voice (str, optional): The voice to use for the conversion. If not specified,
+                the default voice is used.
+
+        Raises:
+            Exception: If any error occurs during the API request or while playing the sound.
         """
-        if model is None:
-            model = self.default_gpt_model
-        if voice is None:
-            voice = self.default_gpt_voice
+        model = model if model else self.default_model
+        voice = voice if voice else self.default_voice
 
-        response = self.client.audio.speech.create(model=model, voice=voice, input=text)
-        with tempfile.NamedTemporaryFile(delete=True) as fp:
-            response.stream_to_file(fp.name)
-            playsound.playsound(fp.name)
-
-    def convert_gtts(self, text, lang=None, tld=None):
-        if lang is None:
-            lang = self.default_gtts_lang
-        if tld is None:
-            tld = self.default_gtts_tld
-
-        tts = gTTS(text=text, lang=lang, tld=tld)
-        with tempfile.NamedTemporaryFile(delete=True) as fp:
-            # Save the synthesized speech audio to the temporary file.
-            tts.save(fp.name)
-
-            # Play the saved audio file. The playsound function blocks until the audio is finished playing.
-            playsound.playsound(fp.name)
+        try:
+            response = self.client.audio.speech.create(
+                model=model, voice=voice, input=text
+            )
+            with tempfile.NamedTemporaryFile(delete=True) as fp:
+                response.stream_to_file(fp.name)
+                playsound.playsound(fp.name)
+        except Exception as e:
+            print(f"An error occurred during text-to-speech conversion: {e}")
+            raise
