@@ -3,7 +3,6 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 
-import app.openai as openai
 from app.audio import SpeechToTextConverter, TextToSpeechConverter
 from app.openai import OpenAiQuery
 
