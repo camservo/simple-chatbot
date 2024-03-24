@@ -5,6 +5,7 @@ import os
 import playsound
 import json
 from dotenv import load_dotenv
+import tempfile
 
 load_dotenv()
 client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
@@ -57,9 +58,9 @@ def ask_openai(question):
 def text_to_speech(text):
     tts = gTTS(text=text, lang='en', tld='ie')
     filename = "response.mp3"
-    tts.save(filename)
-    playsound.playsound(filename)
-    os.remove(filename)
+    with tempfile.NamedTemporaryFile(delete=True) as fp:
+        tts.save(fp.name)
+        playsound.playsound(fp.name)
 
 if __name__ == "__main__":
     n = 1
