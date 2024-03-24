@@ -8,12 +8,7 @@ from gtts import gTTS
 
 class TextToSpeechConverter:
     """
-    A class to convert text into speech using different backends.
-
-    This class provides functionality to convert text into speech using either
-    OpenAI's GPT model for text-to-speech conversion or Google's Text-to-Speech (gTTS) API.
-    It allows for specifying different models, voices, languages, and top-level domains (TLDs)
-    for the gTTS API to customize the speech output.
+    Converts text into speech using different backends, including OpenAI's GPT model for text-to-speech conversion and Google's Text-to-Speech (gTTS) API. Allows specifying models, voices, languages, and TLDs for customization.
     """
 
     def __init__(
@@ -26,7 +21,15 @@ class TextToSpeechConverter:
         default_gtts_tld="ie",
     ):
         """
-        Initializes a new instance of the TextToSpeechConverter class.
+        Initializes the text-to-speech converter with default settings.
+
+        Parameters:
+            client: The OpenAI client instance for API requests.
+            default_gpt_model (str): Default GPT model for text-to-speech conversion.
+            default_gpt_voice (str): Default voice for GPT-based conversions.
+            default_renderer (str): Default backend renderer ('gtts' for Google TTS, 'chatgpt' for OpenAI GPT).
+            default_gtts_lang (str): Default language for gTTS.
+            default_gtts_tld (str): Default top-level domain for gTTS, affecting accent.
         """
         self.client = client
         self.default_gpt_model = default_gpt_model
@@ -37,7 +40,11 @@ class TextToSpeechConverter:
 
     def convert(self, text, renderer=None):
         """
-        Converts text to speech using the specified or default rendering backend.
+        Converts text to speech using a specified or default rendering backend.
+
+        Parameters:
+            text (str): Text to be converted to speech.
+            renderer (str, optional): Rendering backend to use ('gtts' or 'chatgpt'). Defaults to None, which uses the default_renderer.
         """
         try:
             renderer = renderer or self.default_renderer
@@ -53,6 +60,11 @@ class TextToSpeechConverter:
     def convert_gpt(self, text, model=None, voice=None):
         """
         Converts text to speech using the GPT model and plays it.
+
+        Parameters:
+            text (str): Text to be converted.
+            model (str, optional): GPT model to use. Defaults to None, which uses the default_gpt_model.
+            voice (str, optional): Voice for GPT-based conversion. Defaults to None, which uses the default_gpt_voice.
         """
         try:
             model = model or self.default_gpt_model
@@ -70,6 +82,11 @@ class TextToSpeechConverter:
     def convert_gtts(self, text, lang=None, tld=None):
         """
         Converts text to speech using the Google Text-to-Speech (gTTS) API and plays it.
+
+        Parameters:
+            text (str): Text to be converted.
+            lang (str, optional): Language for gTTS. Defaults to None, which uses the default_gtts_lang.
+            tld (str, optional): Top-level domain for gTTS, affecting accent. Defaults to None, which uses the default_gtts_tld.
         """
         try:
             lang = lang or self.default_gtts_lang
@@ -85,16 +102,7 @@ class TextToSpeechConverter:
 
 class SpeechToTextConverter:
     """
-    A class to convert speech to text using various backends.
-
-    This class facilitates converting speech input, either from a microphone or other sources,
-    into text by using different speech recognition services or APIs. Currently, it primarily supports
-    microphone input through the speech_recognition library's Google Web Speech API interface.
-
-    Attributes:
-        client: The API client or configuration used for speech recognition services. (Placeholder attribute, as the current implementation does not directly use it with Google's Web Speech API.)
-        default_renderer (str): The default backend service for speech-to-text conversion.
-        default_input_type (str): The default input type for capturing speech.
+    Converts speech to text using various backends, primarily supporting microphone input through the speech_recognition library's Google Web Speech API interface.
     """
 
     def __init__(
@@ -104,12 +112,12 @@ class SpeechToTextConverter:
         default_input_type="microphone",
     ):
         """
-        Initializes a new instance of the SpeechToTextConverter class.
+        Initializes the speech-to-text converter with default settings.
 
-        Args:
-            client: A placeholder for an API client or configuration. Currently unused.
-            default_renderer (str): The default service for speech-to-text conversion. Defaults to 'speech_recognition'.
-            default_input_type (str): The default method of capturing speech. Defaults to 'microphone'.
+        Parameters:
+            client: A placeholder for an API client or configuration. Currently, this is unused as the implementation leverages the speech_recognition library, which does not require an API client for its default functionality.
+            default_renderer (str): The default service for speech-to-text conversion. Defaults to 'speech_recognition', which utilizes the Google Web Speech API.
+            default_input_type (str): The default method of capturing speech. Currently, 'microphone' is the supported input type, indicating that speech input will be captured using the device's microphone.
         """
         self.client = client
         self.default_renderer = default_renderer
@@ -119,15 +127,12 @@ class SpeechToTextConverter:
         """
         Converts speech to text using the specified or default renderer and input type.
 
-        Args:
-            renderer (str, optional): The speech-to-text service to use. Currently supports 'speech_recognition' only.
-            input_type (str, optional): The method of capturing speech. Currently supports 'microphone' only.
+        Parameters:
+            renderer (str, optional): The speech-to-text service to use. Only 'speech_recognition' is currently supported. Defaults to None, which uses the instance's default_renderer.
+            input_type (str, optional): The method of capturing speech. Only 'microphone' is currently supported. Defaults to None, which uses the instance's default_input_type.
 
         Returns:
-            str: The recognized text from speech input.
-
-        Raises:
-            Logs an error if an unknown renderer is specified or if an exception occurs during processing.
+            The recognized text from speech input as a string. If an error occurs or the speech cannot be recognized, it may return None or log an error.
         """
         try:
             renderer = renderer or self.default_renderer
@@ -141,13 +146,10 @@ class SpeechToTextConverter:
 
     def get_microphone_input(self):
         """
-        Captures audio input from the microphone and converts it to text using Google's Web Speech API.
+        Captures audio input from the microphone and attempts to convert it to text using the Google Web Speech API.
 
         Returns:
-            str: The recognized text from the microphone input.
-
-        Raises:
-            Prints a message to the console if the speech is unintelligible or if a request error occurs.
+            The recognized text from the microphone input as a string. If the speech is unintelligible or if a request error occurs, it may print an error message to the console.
         """
         r = sr.Recognizer()
         with sr.Microphone() as source:
@@ -164,13 +166,13 @@ class SpeechToTextConverter:
 
     def convert_sr(self, input_type=None):
         """
-        Converts speech to text based on the input type. Currently, only 'microphone' input type is supported.
+        Facilitates speech-to-text conversion based on the input type. This method currently supports microphone input only.
 
-        Args:
-            input_type (str, optional): The method of capturing speech. Defaults to the instance's default input type.
+        Parameters:
+            input_type (str, optional): Specifies the method of capturing speech, with 'microphone' as the supported type. Defaults to None, which uses the instance's default_input_type.
 
         Returns:
-            str: The recognized text from the specified input type.
+            The recognized text from the specified input type as a string. This method delegates to get_microphone_input for actual speech capture and recognition.
         """
         if input_type.lower() == "microphone":
             return self.get_microphone_input()
