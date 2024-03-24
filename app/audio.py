@@ -2,6 +2,7 @@ import logging
 import tempfile
 
 import playsound
+import speech_recognition as sr
 from gtts import gTTS
 
 
@@ -80,3 +81,54 @@ class TextToSpeechConverter:
                 playsound.playsound(fp.name)
         except Exception as e:
             logging.error(f"Error in convert_gtts method: {str(e)}")
+
+
+class SpeechToTextConverter:
+    def __init__(
+        self,
+        client,
+        default_renderer="speech_recognition",
+        default_input_type="microphone",
+    ):
+        """
+        Initializes a new instance of the TextToSpeechConverter class.
+        """
+        self.client = client
+        self.default_renderer = default_renderer
+        self.default_input_type = default_input_type
+
+    def convert(self, renderer=None, input_type=None):
+        try:
+            renderer = renderer or self.default_renderer
+            input_type = input_type or self.default_input_type
+            if renderer == "speech_recognition":
+                response = self.convert_sr(input_type=input_type)
+                return response
+            else:
+                logging.error(f"Unknown renderer: {renderer}")
+        except Exception as e:
+            logging.error(f"Error in convert method: {str(e)}")
+
+    def get_microphone_input(self):
+        r = sr.Recognizer()
+        with sr.Microphone() as source:
+            print("Say something!")
+            audio = r.listen(source)
+        try:
+            text = r.recognize_google(audio)
+            print("You said: " + text)
+            return text
+        except sr.UnknownValueError:
+            # This exception is raised if the speech is unintelligible.
+            print("Could not understand audio")
+        except sr.RequestError as e:
+            # This exception is raised if there's an issue with the Google API request.
+            print(
+                f"Could not request results from Google Speech Recognition service; {e}"
+            )
+
+    def convert_sr(self, input_type=None):
+        input_type = input_type or self.default_input_type
+        if input_type.lower() == "microphone":
+            input = self.get_microphone_input()
+            return input
