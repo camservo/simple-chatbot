@@ -3,9 +3,12 @@ name: Run tests on python application
 on:
   pull_request:
 
+permissions:
+  checks: write
+  pull-requests: write
+
 jobs:
   test:
-
     runs-on: ubuntu-latest
 
     steps:
@@ -21,9 +24,32 @@ jobs:
     - name: Test with pytest
       run: |
         pip install pytest pytest-cov
-        pytest --doctest-modules --junitxml=junit/test-results.xml --cov=com --cov-report=xml --cov-report=html
+        pytest --doctest-modules --junitxml=reports/test-results.xml --cov=com --cov-report=xml --cov-report=html
+    - name: Upload pytest results as artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: pytest-reports
+        path: |
+          reports/test-results.xml
+          reports/cov.xml
     - name: Lint with Ruff
       run: |
         pip install ruff
         ruff --output-format=github .
       continue-on-error: false
+
+  publish-test-results:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - name: Download artifact with pytest results
+      uses: actions/download-artifact@v3
+      with:
+        name: pytest-reports
+        path: reports
+    - name: Publish unit test results
+      uses: EnricoMi/publish-unit-test-result-action@v1
+      if: always() # This ensures that the test results are published even if the previous steps fail
+      with:
+        files: reports/test-results.xml
+        check_name: Python Application Tests # Name for the check run
