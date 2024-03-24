@@ -44,7 +44,6 @@ def ask_openai(question):
     )        
     for chunk in response:
         if chunk.choices[0].delta.content:
-            # print('Chunk: ', chunk.choices[0].delta.content)  # Assuming the correct chunk structure
             buffer += str(chunk.choices[0].delta.content)
         try:
             obj = json.loads(buffer)
