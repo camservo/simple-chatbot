@@ -49,8 +49,10 @@ class TextToSpeechConverter:
         try:
             renderer = renderer or self.default_renderer
             if renderer == "chatgpt":
+                logging.debug(f"running TTS renderer ${renderer}")
                 self.convert_gpt(text=text)
             elif renderer == "gtts":
+                logging.debug(f"running TTS renderer ${renderer}")
                 self.convert_gtts(text=text)
             else:
                 logging.error(f"Unknown renderer: {renderer}")
