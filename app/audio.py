@@ -134,45 +134,31 @@ class SpeechToTextConverter:
         Returns:
             The recognized text from speech input as a string. If an error occurs or the speech cannot be recognized, it may return None or log an error.
         """
+        renderer = renderer or self.default_renderer
         try:
-            renderer = renderer or self.default_renderer
             input_type = input_type or self.default_input_type
-            if renderer == "speech_recognition":
-                return self.convert_sr(input_type=input_type)
-            else:
-                logging.error(f"Unknown renderer: {renderer}")
+            if input_type == "microphone":
+                return self.get_microphone_input(renderer)
         except Exception as e:
             logging.error(f"Error in convert method: {str(e)}")
 
-    def get_microphone_input(self):
+    def get_microphone_input(self, renderer):
         """
         Captures audio input from the microphone and attempts to convert it to text using the Google Web Speech API.
 
         Returns:
             The recognized text from the microphone input as a string. If the speech is unintelligible or if a request error occurs, it may print an error message to the console.
         """
-        r = sr.Recognizer()
+        renderer = renderer or self.default_renderer
+        recognizer = sr.Recognizer()
         with sr.Microphone() as source:
             print("Say something!")
-            audio = r.listen(source)
-        try:
+            audio = recognizer.listen(source)
+            return self.render(renderer, audio)
+
+    def render(self, renderer, audio):
+        r = sr.Recognizer()
+        if renderer == "google_cloud":
+            return r.recognize_google_cloud(audio)
+        if renderer == "gtts":
             return r.recognize_google(audio)
-        except sr.UnknownValueError:
-            print("Could not understand audio")
-        except sr.RequestError as e:
-            print(
-                f"Could not request results from Google Speech Recognition service; {e}"
-            )
-
-    def convert_sr(self, input_type=None):
-        """
-        Facilitates speech-to-text conversion based on the input type. This method currently supports microphone input only.
-
-        Parameters:
-            input_type (str, optional): Specifies the method of capturing speech, with 'microphone' as the supported type. Defaults to None, which uses the instance's default_input_type.
-
-        Returns:
-            The recognized text from the specified input type as a string. This method delegates to get_microphone_input for actual speech capture and recognition.
-        """
-        if input_type.lower() == "microphone":
-            return self.get_microphone_input()
