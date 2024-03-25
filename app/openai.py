@@ -1,5 +1,9 @@
 import json
 import logging
+import os
+
+LOGLEVEL = os.environ.get("LOGLEVEL", "WARNING").upper()
+logging.basicConfig(level=LOGLEVEL)
 
 
 class OpenAiQuery:

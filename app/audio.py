@@ -1,9 +1,13 @@
 import logging
+import os
 import tempfile
 
 import playsound
 import speech_recognition as sr
 from gtts import gTTS
+
+LOGLEVEL = os.environ.get("LOGLEVEL", "WARNING").upper()
+logging.basicConfig(level=LOGLEVEL)
 
 
 class TextToSpeechConverter:
@@ -147,6 +151,7 @@ class SpeechToTextConverter:
         :param renderer: The renderer to use for speech recognition.
         :return: The recognized text.
         """
+        logging.debug("Getting input from microphone.")
         recognizer = sr.Recognizer()
         with sr.Microphone() as source:
             print("Say something!")
@@ -164,9 +169,11 @@ class SpeechToTextConverter:
         recognizer = sr.Recognizer()
         try:
             if renderer == "google_cloud":
+                logging.debug("Rending with google cloud STT converter.")
                 # Assuming credentials and configuration for Google Cloud are set elsewhere
                 return recognizer.recognize_google_cloud(audio)
             elif renderer == "gtts":
+                logging.debug("Rending with google local STT converter.")
                 return recognizer.recognize_google(audio)
             else:
                 logging.error("Unsupported renderer specified.")
