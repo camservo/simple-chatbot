@@ -81,6 +81,7 @@ class TextToSpeechConverter:
         except Exception as e:
             logging.error(f"Error in convert_gpt method: {str(e)}")
 
+    ## Need to figure out how to maintain this better
     # def convert_gtts(self, text, lang=None, tld=None):
     #     lang = lang or self.default_gtts_lang
     #     tld = tld or self.default_gtts_tld
