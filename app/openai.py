@@ -41,20 +41,19 @@ class OpenAiQuery:
             model = model or self.default_model
 
             # System message for sentence segmentation, if needed
-            system_message = "Please place every sentence in its own complete json object. The key of each sentence should be 'message'.  The response should not be formatted at all otherwise."
-
-            # It might be necessary to adjust the approach of adding system messages depending on your use case
-            # self.add_message_to_history("system", system_message)
+            system_message = {
+                "role": "system",
+                "content": "Please place every sentence in its own complete json object. The key of each sentence should be 'message'.  The response should not be formatted at all otherwise.",
+            }
 
             # Add the user's question to the session history
             self.add_message_to_history("user", question)
-
+            messages = list(self.session_history)
+            messages.append(system_message)
+            logging.debug("Sending messages: ", messages)
             response = self.client.chat.completions.create(
                 model=model,
-                messages=[
-                    self.session_history,
-                    system_message,
-                ],  # Pass the updated session history
+                messages=messages,
                 stream=True,
             )
 

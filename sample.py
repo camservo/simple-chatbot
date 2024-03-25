@@ -14,9 +14,14 @@ if __name__ == "__main__":
     query_engine = OpenAiQuery(client)
     tts_converter.default_renderer = "chatgpt"
     stt_converter.default_renderer = "gtts"
+    enable_voice = True
     n = 10
     for i in range(n):
-        question = stt_converter.convert()
+        question = ""
+        if enable_voice:
+            question = stt_converter.convert()
+        else:
+            question = "hello, how are you?"
         if question:
             print("Question: ", question)
             for sentence in query_engine.get_openai_responses_in_sentences(
