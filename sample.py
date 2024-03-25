@@ -13,6 +13,7 @@ if __name__ == "__main__":
     stt_converter = SpeechToTextConverter(client)
     query_engine = OpenAiQuery(client)
     tts_converter.default_renderer = "chatgpt"
+    stt_converter.default_renderer = "gtts"
     n = 1
     for i in range(n):
         question = stt_converter.convert()
