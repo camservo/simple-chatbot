@@ -1,6 +1,7 @@
 import logging
 import os
 import tempfile
+import time
 
 import playsound
 import speech_recognition as sr
@@ -10,9 +11,18 @@ LOGLEVEL = os.environ.get("LOGLEVEL", "WARNING").upper()
 logging.basicConfig(level=LOGLEVEL)
 
 
+import logging
+import queue
+import tempfile
+import threading
+
+from gtts import gTTS
+from playsound import playsound
+
+
 class TextToSpeechConverter:
     """
-    Converts text into speech using different backends, including OpenAI's GPT model for text-to-speech conversion and Google's Text-to-Speech (gTTS) API. Allows specifying models, voices, languages, and TLDs for customization.
+    Converts text into speech using different backends, including OpenAI's GPT model for text-to-speech conversion and Google's Text-to-Speech (gTTS) API. Allows specifying models, voices, languages, and TLDs for customization. Implements a queue system for orderly processing and playback.
     """
 
     def __init__(
@@ -24,86 +34,77 @@ class TextToSpeechConverter:
         default_gtts_lang="en",
         default_gtts_tld="ie",
     ):
-        """
-        Initializes the text-to-speech converter with default settings.
-
-        Parameters:
-            client: The OpenAI client instance for API requests.
-            default_gpt_model (str): Default GPT model for text-to-speech conversion.
-            default_gpt_voice (str): Default voice for GPT-based conversions.
-            default_renderer (str): Default backend renderer ('gtts' for Google TTS, 'chatgpt' for OpenAI GPT).
-            default_gtts_lang (str): Default language for gTTS.
-            default_gtts_tld (str): Default top-level domain for gTTS, affecting accent.
-        """
         self.client = client
         self.default_gpt_model = default_gpt_model
         self.default_gpt_voice = default_gpt_voice
         self.default_renderer = default_renderer
         self.default_gtts_lang = default_gtts_lang
         self.default_gtts_tld = default_gtts_tld
+        self.convert_queue = queue.Queue()
+        self.playback_queue = queue.Queue()
+        self.convert_worker_thread = threading.Thread(target=self.process_convert_queue)
+        self.convert_worker_thread.daemon = True
+        self.convert_worker_thread.start()
+        self.playback_worker_thread = threading.Thread(
+            target=self.process_playback_queue
+        )
+        self.playback_worker_thread.daemon = True
+        self.playback_worker_thread.start()
+        self.playback_complete = False
 
     def convert(self, text, renderer=None):
-        """
-        Converts text to speech using a specified or default rendering backend.
+        renderer = renderer or self.default_renderer
+        self.convert_queue.put((text, renderer))
 
-        Parameters:
-            text (str): Text to be converted to speech.
-            renderer (str, optional): Rendering backend to use ('gtts' or 'chatgpt'). Defaults to None, which uses the default_renderer.
-        """
-        try:
-            renderer = renderer or self.default_renderer
-            if renderer == "chatgpt":
-                logging.debug(f"running TTS renderer ${renderer}")
-                self.convert_gpt(text=text)
-            elif renderer == "gtts":
-                logging.debug(f"running TTS renderer ${renderer}")
-                self.convert_gtts(text=text)
-            else:
-                logging.error(f"Unknown renderer: {renderer}")
-        except Exception as e:
-            logging.error(f"Error in convert method: {str(e)}")
+    def process_convert_queue(self):
+        while True:
+            text, renderer = self.convert_queue.get()
+            try:
+                if renderer == "chatgpt":
+                    self.convert_gpt(text=text)
+                elif renderer == "gtts":
+                    self.convert_gtts(text=text)
+                else:
+                    logging.error(f"Unknown renderer: {renderer}")
+            finally:
+                self.convert_queue.task_done()
 
     def convert_gpt(self, text, model=None, voice=None):
-        """
-        Converts text to speech using the GPT model and plays it.
-
-        Parameters:
-            text (str): Text to be converted.
-            model (str, optional): GPT model to use. Defaults to None, which uses the default_gpt_model.
-            voice (str, optional): Voice for GPT-based conversion. Defaults to None, which uses the default_gpt_voice.
-        """
+        model = model or self.default_gpt_model
+        voice = voice or self.default_gpt_voice
         try:
-            model = model or self.default_gpt_model
-            voice = voice or self.default_gpt_voice
-
             response = self.client.audio.speech.create(
                 model=model, voice=voice, input=text
             )
-            with tempfile.NamedTemporaryFile(delete=True) as fp:
-                response.stream_to_file(fp.name)
-                playsound.playsound(fp.name)
+            self.playback_complete = False
+            self.playback_queue.put(response)
         except Exception as e:
             logging.error(f"Error in convert_gpt method: {str(e)}")
 
-    def convert_gtts(self, text, lang=None, tld=None):
-        """
-        Converts text to speech using the Google Text-to-Speech (gTTS) API and plays it.
+    # def convert_gtts(self, text, lang=None, tld=None):
+    #     lang = lang or self.default_gtts_lang
+    #     tld = tld or self.default_gtts_tld
+    #     try:
+    #         tts = gTTS(text=text, lang=lang, tld=tld)
+    #         with tempfile.NamedTemporaryFile(delete=True) as fp:
+    #             tts.save(fp.name)
+    #             playsound(fp.name)
+    #     except Exception as e:
+    #         logging.error(f"Error in convert_gtts method: {str(e)}")
 
-        Parameters:
-            text (str): Text to be converted.
-            lang (str, optional): Language for gTTS. Defaults to None, which uses the default_gtts_lang.
-            tld (str, optional): Top-level domain for gTTS, affecting accent. Defaults to None, which uses the default_gtts_tld.
-        """
-        try:
-            lang = lang or self.default_gtts_lang
-            tld = tld or self.default_gtts_tld
-
-            tts = gTTS(text=text, lang=lang, tld=tld)
-            with tempfile.NamedTemporaryFile(delete=True) as fp:
-                tts.save(fp.name)
-                playsound.playsound(fp.name)
-        except Exception as e:
-            logging.error(f"Error in convert_gtts method: {str(e)}")
+    def process_playback_queue(self):
+        while True:
+            response = self.playback_queue.get()
+            try:
+                with tempfile.NamedTemporaryFile(delete=True) as fp:
+                    response.stream_to_file(fp.name)
+                    playsound(fp.name)
+                    if self.playback_queue.empty():
+                        self.playback_complete = True
+                    else:
+                        time.sleep(0.25)
+            except Exception as e:
+                logging.error(f"Error in playback method: {str(e)}")
 
 
 class SpeechToTextConverter:
