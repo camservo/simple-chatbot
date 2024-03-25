@@ -43,18 +43,20 @@ class OpenAiQuery:
     def get_openai_responses_in_sentences(self, question, model=None):
         try:
             model = model or self.default_model
-
+            response_text = ""
             # System message for sentence segmentation, if needed
             system_message = {
                 "role": "system",
                 "content": "Please place every sentence in its own complete json object. The key of each sentence should be 'message'.  The response should not be formatted at all otherwise.",
             }
-
-            # Add the user's question to the session history
-            self.add_message_to_history("user", question)
+            query = {"role": "user", "content": question}
             messages = list(self.session_history)
             messages.append(system_message)
-            logging.debug("Sending messages: ", messages)
+            messages.append(query)
+            print(messages)
+            # logging.info("Sending messages: ", str(messages))
+            print(json.dumps(messages))
+
             response = self.client.chat.completions.create(
                 model=model,
                 messages=messages,
@@ -65,6 +67,7 @@ class OpenAiQuery:
             for chunk in response:
                 if chunk.choices[0].delta.content:
                     buffer += str(chunk.choices[0].delta.content)
+                    response_text += str(chunk.choices[0].delta.content)
                 try:
                     obj = json.loads(buffer)
                     yield obj["message"]
@@ -73,8 +76,11 @@ class OpenAiQuery:
                     continue
 
             if buffer.strip():
+                response_text != str(buffer)
                 yield buffer.strip()
 
+            # Add the user's question to the session history
+            self.add_message_to_history("assistant", response_text)
             # Optionally, add the system's segmented response to the session history here
 
         except Exception as e:

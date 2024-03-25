@@ -154,7 +154,11 @@ class SpeechToTextConverter:
         logging.debug("Getting input from microphone.")
         recognizer = sr.Recognizer()
         with sr.Microphone() as source:
-            print("Say something!")
+            recognizer.adjust_for_ambient_noise(source)
+            # This should be done once per session rather than every loop.
+            logging.debug("Adjusting for ambient noise")
+        with sr.Microphone() as source:
+            print("listening...")
             audio = recognizer.listen(source)
             return self.render(renderer, audio)
 
@@ -166,6 +170,7 @@ class SpeechToTextConverter:
         :param audio: The captured audio to be converted into text.
         :return: The recognized text.
         """
+        ## TODO: Rendering should be done by submitting requests to a queue
         recognizer = sr.Recognizer()
         try:
             if renderer == "google_cloud":
