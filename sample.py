@@ -1,4 +1,5 @@
 import os
+import time
 
 import speech_recognition as sr
 
@@ -19,13 +20,13 @@ tts_converter.default_renderer = "chatgpt"
 # stt_converter.default_renderer = "gtts"
 enable_voice = True
 
-n = 5
+n = 10
 for i in range(n):
     question = ""
     if enable_voice:
         question = stt_converter.convert()
     else:
-        question = "hello, how are you?"
+        question = "Can you give me ten sample sentences?"
     if question:
         print("Question: ", question)
         for sentence in query_engine.get_openai_responses_in_sentences(
@@ -33,3 +34,5 @@ for i in range(n):
         ):
             print("Response sentence: ", sentence)
             tts_converter.convert(text=sentence)
+    while not tts_converter.playback_complete:
+        time.sleep(1)
