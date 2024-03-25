@@ -1,12 +1,10 @@
 import os
 import time
 
-import speech_recognition as sr
 
 # from docx import Document
 from dotenv import load_dotenv
 from openai import OpenAI
-from whisper_mic import WhisperMic
 
 from app.audio import SpeechToTextConverter, TextToSpeechConverter
 from app.openai import OpenAiQuery

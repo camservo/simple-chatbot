@@ -1,23 +1,15 @@
 import logging
 import os
-import tempfile
-import time
-
-import playsound
-import speech_recognition as sr
-from gtts import gTTS
-
-LOGLEVEL = os.environ.get("LOGLEVEL", "WARNING").upper()
-logging.basicConfig(level=LOGLEVEL)
-
-
-import logging
 import queue
 import tempfile
 import threading
+import time
 
-from gtts import gTTS
+import speech_recognition as sr
 from playsound import playsound
+
+LOGLEVEL = os.environ.get("LOGLEVEL", "WARNING").upper()
+logging.basicConfig(level=LOGLEVEL)
 
 
 class TextToSpeechConverter:
