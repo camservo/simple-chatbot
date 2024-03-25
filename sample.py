@@ -14,7 +14,7 @@ if __name__ == "__main__":
     query_engine = OpenAiQuery(client)
     tts_converter.default_renderer = "chatgpt"
     stt_converter.default_renderer = "gtts"
-    n = 1
+    n = 10
     for i in range(n):
         question = stt_converter.convert()
         if question:
