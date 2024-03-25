@@ -1,9 +1,13 @@
 import logging
+import os
 import tempfile
 
 import playsound
 import speech_recognition as sr
 from gtts import gTTS
+
+LOGLEVEL = os.environ.get("LOGLEVEL", "WARNING").upper()
+logging.basicConfig(level=LOGLEVEL)
 
 
 class TextToSpeechConverter:
@@ -103,23 +107,15 @@ class TextToSpeechConverter:
 
 
 class SpeechToTextConverter:
-    """
-    Converts speech to text using various backends, primarily supporting microphone input through the speech_recognition library's Google Web Speech API interface.
-    """
-
     def __init__(
-        self,
-        client,
-        default_renderer="speech_recognition",
-        default_input_type="microphone",
+        self, client=None, default_renderer="gtts", default_input_type="microphone"
     ):
         """
-        Initializes the speech-to-text converter with default settings.
+        Initializes the SpeechToTextConverter.
 
-        Parameters:
-            client: A placeholder for an API client or configuration. Currently, this is unused as the implementation leverages the speech_recognition library, which does not require an API client for its default functionality.
-            default_renderer (str): The default service for speech-to-text conversion. Defaults to 'speech_recognition', which utilizes the Google Web Speech API.
-            default_input_type (str): The default method of capturing speech. Currently, 'microphone' is the supported input type, indicating that speech input will be captured using the device's microphone.
+        :param client: An optional client object for interacting with external speech recognition services.
+        :param default_renderer: The default service to use for speech recognition. Supports 'google_cloud' and 'gtts'.
+        :param default_input_type: The default method for capturing speech input. Currently, only 'microphone' is supported.
         """
         self.client = client
         self.default_renderer = default_renderer
@@ -129,29 +125,33 @@ class SpeechToTextConverter:
         """
         Converts speech to text using the specified or default renderer and input type.
 
-        Parameters:
-            renderer (str, optional): The speech-to-text service to use. Only 'speech_recognition' is currently supported. Defaults to None, which uses the instance's default_renderer.
-            input_type (str, optional): The method of capturing speech. Only 'microphone' is currently supported. Defaults to None, which uses the instance's default_input_type.
-
-        Returns:
-            The recognized text from speech input as a string. If an error occurs or the speech cannot be recognized, it may return None or log an error.
+        :param renderer: The renderer to use for speech recognition.
+        :param input_type: The method for capturing speech input.
+        :return: The recognized text or None if an error occurs.
         """
         renderer = renderer or self.default_renderer
+        input_type = input_type or self.default_input_type
+
+        if input_type != "microphone":
+            logging.error(
+                "Unsupported input type. Currently, only 'microphone' is supported."
+            )
+            return None
+
         try:
-            input_type = input_type or self.default_input_type
-            if input_type == "microphone":
-                return self.get_microphone_input(renderer)
+            return self.get_microphone_input(renderer)
         except Exception as e:
             logging.error(f"Error in convert method: {str(e)}")
+            return None
 
     def get_microphone_input(self, renderer):
         """
-        Captures audio input from the microphone and attempts to convert it to text using the Google Web Speech API.
+        Captures audio from the microphone and converts it to text using the specified renderer.
 
-        Returns:
-            The recognized text from the microphone input as a string. If the speech is unintelligible or if a request error occurs, it may print an error message to the console.
+        :param renderer: The renderer to use for speech recognition.
+        :return: The recognized text.
         """
-        renderer = renderer or self.default_renderer
+        logging.debug("Getting input from microphone.")
         recognizer = sr.Recognizer()
         with sr.Microphone() as source:
             print("Say something!")
@@ -159,8 +159,25 @@ class SpeechToTextConverter:
             return self.render(renderer, audio)
 
     def render(self, renderer, audio):
-        r = sr.Recognizer()
-        if renderer == "google_cloud":
-            return r.recognize_google_cloud(audio)
-        if renderer == "gtts":
-            return r.recognize_google(audio)
+        """
+        Renders the audio into text using the specified renderer.
+
+        :param renderer: The renderer to use for speech recognition.
+        :param audio: The captured audio to be converted into text.
+        :return: The recognized text.
+        """
+        recognizer = sr.Recognizer()
+        try:
+            if renderer == "google_cloud":
+                logging.debug("Rending with google cloud STT converter.")
+                # Assuming credentials and configuration for Google Cloud are set elsewhere
+                return recognizer.recognize_google_cloud(audio)
+            elif renderer == "gtts":
+                logging.debug("Rending with google local STT converter.")
+                return recognizer.recognize_google(audio)
+            else:
+                logging.error("Unsupported renderer specified.")
+                return None
+        except Exception as e:
+            logging.error(f"Error in render method: {str(e)}")
+            return None

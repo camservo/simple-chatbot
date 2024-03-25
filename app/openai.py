@@ -1,5 +1,9 @@
 import json
 import logging
+import os
+
+LOGLEVEL = os.environ.get("LOGLEVEL", "WARNING").upper()
+logging.basicConfig(level=LOGLEVEL)
 
 
 class OpenAiQuery:
@@ -29,7 +33,7 @@ class OpenAiQuery:
                 messages=[
                     {
                         "role": "system",
-                        "content": "Please place every sentence in its own complete json object. The key of each sentence should be 'message'",
+                        "content": "Please place every sentence in its own complete json object. The key of each sentence should be 'message'.  The response should not be formatted at all otherwise.",
                     },
                     {"role": "user", "content": question},
                 ],
